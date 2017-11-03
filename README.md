@@ -1,3 +1,3 @@
-java
+masm
 =========
-A repository for java programs
+A repository for masm programs
