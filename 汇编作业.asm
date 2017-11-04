@@ -22,6 +22,7 @@ string04 db "This is function 4 $"
 string05 db "This is function 5 $"
 str01 db "Input string:"
 savestr db 100 dup (?)
+output2 db "The maximum is: $"
 
 DSEG    ENDS
 
@@ -61,12 +62,15 @@ call clearline
     CMP   al,32h
     jz    L2
     CMP   al,33h
-    jz    L3
-    CMP   al,34h
-    jz    L4
-    CMP   al,35h
-    jz    L5
-    jmp   L6
+    jnz    s3
+    jmp   L3
+s3: CMP   al,34h
+    jnz    s4
+    jmp   L4
+s4: CMP   al,35h
+    jnz    s5
+    jmp   L5
+s5: jmp   L6
 
 L1: 	
 	call clearline
@@ -77,17 +81,17 @@ L1:
 	call clearline
 	
 	lea si,savestr
-	
+
 	
 Linput:	mov ah,01h
 	int 21h
 	cmp al,0dh
-	jz small
+	jz link
 	mov [si],al
 	inc si
 	jmp Linput
 	
-small:	
+link:	
 	call clearline
 	mov [si],'$'
 	
@@ -110,16 +114,98 @@ output:	lea  dx,savestr
 	int  21H
 	jmp  L6
 L2: 
+	call clearline
 	lea  dx,string02
 	mov  AH,09H
 	int  21H
-;input your function here
+	
+	call clearline
+	
+	lea si,savestr
+
+	
+Linput2:	mov ah,01h
+	int 21h
+	cmp al,0dh
+	jz link2
+	mov [si],al
+	inc si
+	jmp Linput2
+	
+link2:	
+	call clearline
+	mov [si],'$'
+	
+	lea si,savestr	
+	mov bl,0
+	
+big:    cmp [si],bl
+	jb big2
+	mov bl,[si]
+
+big2:	cmp [si],24h
+	jz big3
+	inc si
+	loop big
+big3:	
+	lea    dx,output2
+   	MOV    AH,09H
+   	INT    21H
+	mov dl,bl
+	mov ah,02h
+	int 21h
+	
+	
 	jmp  L6
 L3: 
+	call clearline
 	lea  dx,string03
 	mov  AH,09H
 	int  21H
-;input your function here
+	
+	call clearline
+	
+	lea si,savestr
+
+	mov cx,0
+Linput3:	
+	mov ah,01h
+	int 21h
+	cmp al,0dh
+	jz link3
+	mov [si],al
+	inc si
+	inc cx
+	jmp Linput3
+	
+link3:	
+	call clearline
+	mov [si],'$'
+	dec cx
+	
+	lea si,savestr
+	add si,cx
+LP1:
+	push cx
+	push si
+LP2:
+	mov al,[si]
+	cmp al,[si-1]
+	jae NOXCHG
+	xchg al,[si-1]
+	mov [si],al
+NOXCHG:
+	dec si
+	loop LP2
+	pop si
+	pop cx
+	loop LP1
+
+	lea  dx,savestr
+	mov  AH,09H
+	int  21H
+
+	
 	jmp  L6
 L4: 
 	lea  dx,string04
@@ -155,12 +241,7 @@ int 21h
 ret
 clearline endp
 
-change proc [si]
 
-
-ret
-
-change endp
 ;*******************************************
 
 CSEG    ENDS 
