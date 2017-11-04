@@ -75,7 +75,7 @@ L1:
 	call clearline
 	
 	lea si,savestr
-
+	mov bx,0
 	
 Linput:	mov ah,01h
 	int 21h
