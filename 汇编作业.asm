@@ -51,7 +51,9 @@ START   PROC    FAR
 LL: lea     dx,string1
     MOV     AH,09H
     INT     21H
-    call clearline
+
+call clearline
+
     MOV     AH,01H
     INT     21H
     CMP   al,31h
@@ -75,7 +77,7 @@ L1:
 	call clearline
 	
 	lea si,savestr
-
+	mov bx,0
 	
 Linput:	mov ah,01h
 	int 21h
