@@ -20,10 +20,12 @@ string02 db "This is function 2 $"
 string03 db "This is function 3 $"
 string04 db "This is function 4 $"
 string05 db "This is function 5 $"
-str01 db "Input string:"
+;str01 db "Input string:"
 savestr db 100 dup (?)
 output2 db "The maximum is: $"
-
+save3 db 100 dup('$')
+flag1 db 0
+save4 db 100 dup('$')
 DSEG    ENDS
 
 SSEG    SEGMENT STACK   'STACK'
@@ -165,59 +167,195 @@ L3:
 	
 	call clearline
 	
-	lea si,savestr
-
-	mov cx,0
-Linput3:	
-	mov ah,01h
+	lea dx,save3
+	mov ah,0ah
 	int 21h
-	cmp al,0dh
-	jz link3
-	mov [si],al
-	inc si
-	inc cx
-	jmp Linput3
-	
-link3:	
-	call clearline
-	mov [si],'$'
-	dec cx
-	
-	lea si,savestr
-	add si,cx
-LP1:
-	push cx
-	push si
-LP2:
-	mov al,[si]
-	cmp al,[si-1]
-	jae NOXCHG
-	xchg al,[si-1]
-	mov [si],al
-NOXCHG:
-	dec si
-	loop LP2
-	pop si
-	pop cx
-	loop LP1
 
-	lea  dx,savestr
-	mov  AH,09H
-	int  21H
+     CALL clearline
 
-	
-	jmp  L6
+
+     LEA BX,save3
+     LEA SI,savestr
+
+  L32:
+
+       MOV AL,[SI]
+       MOV CL,0AH
+       MUL CL
+       MOV [SI],AL
+       SUB [BX],30H
+       MOV AL,[BX]
+       ADD [SI],AL
+       CMP [BX+1],0DH
+       JZ L33
+       CMP [BX+1],20H
+       JZ L33
+       ADD BX,01H
+       JMP L32
+  L33:
+       CMP [BX+1],0DH
+       JZ L340 ;
+       ADD SI,01H
+       ADD BX,02H
+       JMP L32
+       
+  L340:
+       MOV [SI+1],'$'
+       
+       LEA AX,savestr;
+       SUB SI,AX
+       ADD SI,01H
+       MOV CX,SI
+  L341:     
+       LEA SI,savestr
+  L34:              
+       CMP [SI+1],'$'
+       JZ L36
+       MOV AH,[SI]
+       CMP AH,[SI+1]
+       JNC L35
+       ADD SI,01H
+       JMP L34
+  L35:             
+       XCHG AH,[SI+1]
+       MOV [SI],AH
+       ADD SI,01H
+       JMP L34
+  L36:                 
+       LOOP L341
+
+       LEA DI,save3
+       LEA SI,savestr
+  L360:
+       CMP [SI],'$'
+       JZ L37
+       MOV BL,10H
+       MOV AH,00H
+       MOV AL,[SI]
+       DIV BL
+       
+      
+       CMP AL,0AH
+       JC L361
+       ADD AL,37H
+       JMP L362
+  L361:
+       ADD AL,30H
+       JMP L362
+       
+  L362:     
+       CMP AH,0AH
+       JC L363
+       ADD AH,37H
+       JMP L364
+  L363:
+       ADD AH,30H
+       JMP L364
+       
+       
+  L364:     
+       MOV [DI],AL
+       MOV [DI+1],AH
+       MOV [DI+2],48H
+       MOV [DI+3],20H
+       ADD DI,04H
+       ADD SI,01H
+       JMP L360
+  L37:    
+       MOV [DI],'$'
+       MOV AH,09H
+       LEA DX,save3
+       INT 21H
+       JMP L6
+
+
 L4: 
+	call clearline
 	lea  dx,string04
 	mov  AH,09H
 	int  21H
-;input your function here
+	call clearline
+	starttime:
+	mov al,00h
+	mov ah,00h
+	int 1ah
+;cx中是小时
+;dx中是分钟和秒  3600到65536的转换
+display1:
+	lea si,save4
+	cmp cl,19h
+	ja hour1
+	cmp cl,9h
+	ja hour2
+	jmp hour3
+hour1:	
+	mov [si],32h
+	add cl,1Ch
+	jmp hour4
+hour2:
+	mov [si],31h
+	add cl,26h
+	jmp hour4
+hour3:
+	mov [si],30h
+	add cl,30h
+hour4:
+	inc si
+	mov [si],cl
+	inc si
+	mov [si],3ah
+	inc si
+
+display2:
+	mov al,00h
+	mov ah,00h
+	int 1ah
+	mov ax,dx
+	mov dx,0
+	mov bx,18	;除以进制
+	div bx
+	mov bl,60
+	div bl
+	mov flag1,ah	;保存秒
+	mov ah,0
+	mov bl,10
+	div bl
+	mov [si],al
+	add [si],30h	;保存十位
+	inc si
+	mov [si],ah
+	add [si],30h	;保存个位
+	inc si
+	mov [si],3ah
+	inc si
+display3:
+	mov ah,0
+	mov al,flag1
+	mov bl,10
+	div bl
+	mov [si],al
+	add [si],30h	;保存十位
+	inc si
+	mov [si],ah
+	add [si],30h	;保存个位
+	
+
+	
+	lea dx,save4
+	mov ah,09h
+	int 21h
+
+	mov ah,3	;重置光标
+	int 10h
+	sub dl,8
+	mov ah,2
+	int 10h
+jmp starttime
+
 	jmp  L6
-L5: 
-	lea  dx,string05
-	mov  AH,09H
-	int  21H
-;input your function here
+L5: 	
+	MOV  AX, 4C00H
+	INT  21H
 	jmp  L6
 L6:
 	call clearline
