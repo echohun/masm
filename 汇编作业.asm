@@ -283,7 +283,7 @@ L4:
 ;dx中是分钟和秒  3600到65536的转换
 display1:
 	lea si,save4
-	cmp cl,19h
+	cmp cl,19
 	ja hour1
 	cmp cl,9h
 	ja hour2
