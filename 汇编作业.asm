@@ -1,4 +1,4 @@
-TITLE   8086 Code Template (for EXE file)
+	TITLE   8086 Code Template (for EXE file)
 
 ;       AUTHOR          emu8086
 ;       DATE            ?
@@ -51,7 +51,7 @@ START   PROC    FAR
 
 ; TODO: add your code here!!!!
 
-LL: lea     dx,string1
+LL: lea     dx,string1		;外层start部分
     MOV     AH,09H
     INT     21H
 
@@ -73,8 +73,8 @@ s4: CMP   al,35h
     jnz    s5
     jmp   L5
 s5: jmp   L6
-
-L1: 	
+				;上面外层start部分
+L1: 				;程序1
 	call clearline
 	lea  dx,string01
 	mov  AH,09H
@@ -98,24 +98,24 @@ link:
 	mov [si],'$'
 	
 	lea si,savestr
-bian:	cmp [si],61h
+bian:	cmp [si],61h		;判断是否为小写
 	jae hey1
 	jmp hey2
 	hey1:
-	cmp [si],7Ah
+	cmp [si],7Ah		
 	ja hey2
-	sub [si],20h
+	sub [si],20h		;小写转大写
 	hey2:
 	cmp [si],24h
 	jz output
 	inc si
 	loop bian
 
-output:	lea  dx,savestr
+output:	lea  dx,savestr		;输出结果
 	mov  AH,09H
 	int  21H
 	jmp  L6
-L2: 
+L2: 				;程序2
 	call clearline
 	lea  dx,string02
 	mov  AH,09H
@@ -126,7 +126,7 @@ L2:
 	lea si,savestr
 
 	
-Linput2:	mov ah,01h
+Linput2:	mov ah,01h	;输入
 	int 21h
 	cmp al,0dh
 	jz link2
@@ -141,7 +141,7 @@ link2:
 	lea si,savestr	
 	mov bl,0
 	
-big:    cmp [si],bl
+big:    cmp [si],bl		;这三个big循环判断最大值
 	jb big2
 	mov bl,[si]
 
@@ -155,119 +155,120 @@ big3:
    	INT    21H
 	mov dl,bl
 	mov ah,02h
-	int 21h
+	int 21h			;输出最大值
 	
 	
 	jmp  L6
-L3: 
+L3:				;程序3
+     call clearline
+     lea  dx,string03
+	mov  ah,09h
+	int  21h
 	call clearline
-	lea  dx,string03
-	mov  AH,09H
-	int  21H
-	
-	call clearline
-	
-	lea dx,save3
-	mov ah,0ah
-	int 21h
+LL0:
+     
+     mov ah,01h
+     lea bx,save3
+  LL1:  
+       int 21h
+       mov [bx],al
+       add bx,01h
+       cmp al,0dh
+       loopnz LL1
 
-     CALL clearline
+     lea bx,save3
+     lea si,savestr
+  LL2:			;十进制转16进制
 
-
-     LEA BX,save3
-     LEA SI,savestr
-
-  L32:
-
-       MOV AL,[SI]
-       MOV CL,0AH
-       MUL CL
-       MOV [SI],AL
-       SUB [BX],30H
-       MOV AL,[BX]
-       ADD [SI],AL
-       CMP [BX+1],0DH
-       JZ L33
-       CMP [BX+1],20H
-       JZ L33
-       ADD BX,01H
-       JMP L32
-  L33:
-       CMP [BX+1],0DH
-       JZ L340 ;
-       ADD SI,01H
-       ADD BX,02H
-       JMP L32
+       mov al,[si]
+       mov cl,0ah
+       mul cl
+       mov [si],al
+       sub [bx],30h
+       mov al,[bx]
+       add [si],al
+       cmp [bx+1],0dh
+       jz LL3
+       cmp [bx+1],20h
+       jz LL3
+       add bx,01h
+       jmp LL2
+  LL3:
+       cmp [bx+1],0dh
+       jz tentosix0 		;输入结束
+       add si,01h
+       add bx,02h
+       jmp LL2
        
-  L340:
-       MOV [SI+1],'$'
+  tentosix0:
+       mov [si+1],'$'
        
-       LEA AX,savestr;
-       SUB SI,AX
-       ADD SI,01H
-       MOV CX,SI
-  L341:     
-       LEA SI,savestr
-  L34:              
-       CMP [SI+1],'$'
-       JZ L36
-       MOV AH,[SI]
-       CMP AH,[SI+1]
-       JNC L35
-       ADD SI,01H
-       JMP L34
-  L35:             
-       XCHG AH,[SI+1]
-       MOV [SI],AH
-       ADD SI,01H
-       JMP L34
-  L36:                 
-       LOOP L341
+       lea ax,savestr
+       sub si,ax
+       add si,01h
+       mov cx,si
+  tentosix1:     
+       lea si,savestr
+  tentosix:        
+       cmp [si+1],'$'
+       jz tostr
+       mov ah,[si]
+       cmp ah,[si+1]
+       jnc LL4
+       add si,01h
+       jmp tentosix
+  LL4:         		;比较
+       xchg ah,[si+1]
+       mov [si],ah
+       add si,01h
+       jmp tentosix
+  tostr:       
+       loop tentosix1
 
-       LEA DI,save3
-       LEA SI,savestr
-  L360:
-       CMP [SI],'$'
-       JZ L37
-       MOV BL,10H
-       MOV AH,00H
-       MOV AL,[SI]
-       DIV BL
+       lea di,save3
+       lea si,savestr
+  tostr0:
+       cmp [si],'$'
+       jz output3
+       mov bl,10h
+       mov ah,00h
+       mov al,[si]
+       div bl
        
       
-       CMP AL,0AH
-       JC L361
-       ADD AL,37H
-       JMP L362
-  L361:
-       ADD AL,30H
-       JMP L362
+       cmp al,0ah
+       jc tostr1
+       add al,37h
+       jmp tostr2
+  tostr1:
+       add al,30h
+       jmp tostr2
        
-  L362:     
-       CMP AH,0AH
-       JC L363
-       ADD AH,37H
-       JMP L364
-  L363:
-       ADD AH,30H
-       JMP L364
+  tostr2:     
+       cmp ah,0ah
+       jc tostr3
+       add ah,37h
+       jmp tostr4
+  tostr3:
+       add ah,30h
+       jmp tostr4
        
        
-  L364:     
-       MOV [DI],AL
-       MOV [DI+1],AH
-       MOV [DI+2],48H
-       MOV [DI+3],20H
-       ADD DI,04H
-       ADD SI,01H
-       JMP L360
-  L37:    
-       MOV [DI],'$'
-       MOV AH,09H
-       LEA DX,save3
-       INT 21H
-       JMP L6
-
+  tostr4:     		;每个数格式矫正填补到四位
+       mov [di],al
+       mov [di+1],ah
+       mov [di+2],48h
+       mov [di+3],20h
+       add di,04h
+       add si,01h
+       jmp tostr0
+  output3:    			;输出
+       mov [di],'$'
+       call clearline
+       mov ah,09h
+       lea dx,save3
+       int 21h
+       jmp L6
 
 L4: 
 	call clearline
@@ -288,9 +289,9 @@ display1:
 	cmp cl,9h
 	ja hour2
 	jmp hour3
-hour1:	
+hour1:				;对小时处理
 	mov [si],32h
-	add cl,1Ch
+	add cl,1ch
 	jmp hour4
 hour2:
 	mov [si],31h
@@ -306,7 +307,7 @@ hour4:
 	mov [si],3ah
 	inc si
 
-display2:
+display2:		;对分钟处理
 	mov al,00h
 	mov ah,00h
 	int 1ah
@@ -328,7 +329,7 @@ display2:
 	inc si
 	mov [si],3ah
 	inc si
-display3:
+display3:		;对秒处理
 	mov ah,0
 	mov al,flag1
 	mov bl,10
@@ -350,10 +351,10 @@ display3:
 	sub dl,8
 	mov ah,2
 	int 10h
-jmp starttime
+jmp starttime		;循环显示时间
 
 	jmp  L6
-L5: 	
+L5: 			;程序5，结束进程
 	MOV  AX, 4C00H
 	INT  21H
 	jmp  L6
